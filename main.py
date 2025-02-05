@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # CORS Configuration (Good)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sentiment-sense.netlify.app", "http://localhost:3000"],
+    allow_origins=["https://sentiment-sense.netlify.app", "https://sentiment.mohsinabbas.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
