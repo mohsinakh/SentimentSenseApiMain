@@ -32,7 +32,7 @@ async def self_pinger():
     while True:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                await client.get("https://sentimentsense-ttjy.onrender.com/health")
+                await client.get("https://sentimentsenseapimain.onrender.com/health")
         except Exception as e:
             logger.error(f"Ping failed: {str(e)}")
         # Random sleep time between 240 and 300 seconds (4 to 5 minutes)
