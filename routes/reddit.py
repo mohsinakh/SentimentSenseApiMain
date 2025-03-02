@@ -1,20 +1,25 @@
-from fastapi import APIRouter, Depends,HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from auth.dependencies import get_current_user
 from schemas.reddit import RedditRequest
 from db.models import User
-from db.crud import save_analysis_history,convert_objectid_to_str
-from sentiment.analyzer import get_sentiment
-from config import REDDIT_CLIENT_ID,REDDIT_CLIENT_SECRET
-import re,praw
+from db.crud import save_analysis_history, convert_objectid_to_str
+from sentiment.analyzer import get_emotions
+from config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET
+import re, praw, asyncpraw, logging
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
 # Set up Reddit API client using PRAW
-reddit = praw.Reddit(client_id=REDDIT_CLIENT_ID, client_secret=REDDIT_CLIENT_SECRET, user_agent="Sentiment Analysis")
+# reddit = praw.Reddit(client_id=REDDIT_CLIENT_ID, client_secret=REDDIT_CLIENT_SECRET, user_agent="Sentiment Analysis")
 
-
+reddit = asyncpraw.Reddit(
+    client_id=REDDIT_CLIENT_ID,
+    client_secret=REDDIT_CLIENT_SECRET,
+    user_agent="Sentiment Analysis"
+)
 
 @router.post("/fetch-comments")
 async def fetch_reddit_comments(request: RedditRequest, user: Optional[User] = Depends(get_current_user)):
@@ -23,34 +28,56 @@ async def fetch_reddit_comments(request: RedditRequest, user: Optional[User] = D
         # Extract post ID from URL
         post_id = re.search(r"(?:comments\/)([0-9A-Za-z_-]+)", request.post_url).group(1)
         
-        # Fetch Reddit post data
-        post = reddit.submission(id=post_id)
-        post.comments.replace_more(limit=0)
+        # 🔥 Await the coroutine to get the actual post object
+        post = await reddit.submission(id=post_id)
         
+        # ✅ Fetch necessary attributes explicitly
+        await post.load()  # 🔥 Ensures we get all submission details
+        post_author = post.author.name if post.author else "Anonymous"  # Fix here: No need to await
+        post_content = post.selftext if hasattr(post, "selftext") else "No content available"
+        post_comments = await post.comments()
+
+        # logging.info(f"Fetched post: {post.title}, by {post_author} , {post}")  # ✅ Log actual post details
+        await post.comments.replace_more(limit=0)  # 🔥 Await this as well
+        post_comments = post.comments.list()  # Now this is a list of comment objects
+
+        # logging.info(post_comments)
+
         # Get all comments and analyze sentiment
-        comments = [{"text": comment.body, 
-                     "sentiment": get_sentiment(comment.body), 
-                     "user": comment.author.name if comment.author else "Anonymous"} 
-                    for comment in post.comments.list()]
-        
+        comments = []
+        for comment in post_comments:
+
+            comment_data = {
+                "text": comment.body,
+                "sentiment": get_emotions(comment.body).get("label"),
+                "user": comment.author.name if comment.author else "Anonymous"
+            }
+            comments.append(comment_data)
+
         # If user is authenticated, save analysis history
         if user:
             result = save_analysis_history(user.username, "reddit", {
                 "post_id": post_id,
                 "post": {
                     "title": post.title,
-                    "author": post.author.name if post.author else "Deleted",
-                    "content": post.selftext,
+                    "author": post_author if post_author else "Deleted",
+                    "content": post_content,
                     "url": post.url,
                     "upvotes": post.ups,
                     "downvotes": post.downs,
-                    "comments_count": len(post.comments)
+                    "comments_count": len(post_comments)
                 },
                 "comments": comments
             })
-            if result.get("message") == "Analysis already exists":
+            # logging.info(f"save_analysis_history result: {result}")  # ✅ Debugging step
+
+            # Check if result is a list or dict and handle accordingly
+            if isinstance(result, list):
+                logging.error(f"Result is a list: {result}")
+                raise HTTPException(status_code=500, detail="Analysis already exists")
+            elif isinstance(result, dict) and result.get("message") == "Analysis already exists":
                 return result
-        
+
         # Convert ObjectId to string in the response
         return convert_objectid_to_str({
             "post": {
@@ -65,5 +92,5 @@ async def fetch_reddit_comments(request: RedditRequest, user: Optional[User] = D
             "comments": comments
         })
     except Exception as e:
-        print(e)  # Log the exception for debugging
+        logging.error(f"Error fetching Reddit comments: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch Reddit comments")

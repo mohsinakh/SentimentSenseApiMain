@@ -1,3 +1,3 @@
 # sentimentAnalysisApi
 # SentimentSenseApi2
-# SentimentSenseApiMain
+# sentimentsenseapi

@@ -1,0 +1,7 @@
+{"web":{"client_id":"450924599598-sjr5vitacg7md9jf89h0626k0dlotc36.apps.googleusercontent.com"
+,"project_id":"sentiment-sense-1",
+"auth_uri":"https://accounts.google.com/o/oauth2/auth",
+"token_uri":"https://oauth2.googleapis.com/token",
+"auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+"client_secret":"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",
+"javascript_origins":["https://sentiment-sense.netlify.app"]}}

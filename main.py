@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, sentiment, email_service, youtube, reddit
 from mangum import Mangum
 import httpx,random,asyncio,logging
+from routes.emotion import router as emotion_router
 
 
 app = FastAPI()
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 # CORS Configuration (Good)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sentiment-sense.netlify.app", "https://sentiment.mohsinabbas.site"],
+    allow_origins=["https://sentiment-sense.netlify.app", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,6 +26,7 @@ app.include_router(sentiment.router, prefix="/sentiment", tags=["sentiment"])
 app.include_router(email_service.router, prefix="/email", tags=["email"])
 app.include_router(youtube.router, prefix="/youtube", tags=["youtube"])
 app.include_router(reddit.router, prefix="/reddit", tags=["reddit"])
+app.include_router(emotion_router)
 
 # Self-pinger Improvement
 async def self_pinger():
@@ -32,7 +34,7 @@ async def self_pinger():
     while True:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                await client.get("https://sentimentsenseapimain.onrender.com/health")
+                await client.get("http://localhost:8000/health")
         except Exception as e:
             logger.error(f"Ping failed: {str(e)}")
         # Random sleep time between 240 and 300 seconds (4 to 5 minutes)

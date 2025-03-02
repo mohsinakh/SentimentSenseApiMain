@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+
+COPY . /app
+
+
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -21,4 +25,4 @@ COPY . .
 EXPOSE 8000
 
 # Start server
-CMD uvicorn main:app --port=8000 --host=0.0.0.0
+CMD ["gunicorn", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]

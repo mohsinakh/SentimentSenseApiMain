@@ -4,7 +4,7 @@ from schemas.youtube import VideoRequest
 from db.models import User
 from googleapiclient.discovery import build
 from config import YOUTUBE_API_KEY
-from sentiment.analyzer import get_sentiment
+from sentiment.analyzer import get_emotions
 from db.crud import save_analysis_history
 import re,logging
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 # Set up YouTube Data API with your API key
-youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY,cache_discovery=False)
 
 
 @router.post("/fetch-comments")
@@ -32,7 +32,7 @@ async def fetch_comments(request: VideoRequest, user: User = Depends(get_current
         comments = [
             {
                 "text": item["snippet"]["topLevelComment"]["snippet"]["textDisplay"], 
-                "sentiment": get_sentiment(item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]),
+                "sentiment": get_emotions(item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]).get("label"),
                 "username": item["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"]  # Add username here
             }
             for item in response.get("items", [])

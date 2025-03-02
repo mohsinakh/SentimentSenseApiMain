@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends,HTTPException
-from sentiment.analyzer import get_sentiment
+from sentiment.analyzer import get_sentiment,get_emotions
 from auth.dependencies import get_current_user
 from schemas.sentiment import TextRequest
 from db.crud import save_analysis_history,convert_objectid_to_str
 from db.models import User
 from db.db_config import analysis_history_collection
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -12,7 +16,15 @@ router = APIRouter()
 async def analyze_sentiment(request: TextRequest, user: User = Depends(get_current_user)):
     """Analyze sentiment of text input."""
     text = request.text
-    sentiment = get_sentiment(text)
+    sentiment_result = get_emotions(text)
+
+    if "error" in sentiment_result:
+        # Return the error if it occurs
+        logging.error(f"Sentiment analysis error: {sentiment_result['error']}")
+        return {"error": sentiment_result["error"]}
+
+    sentiment = sentiment_result["label"]
+    logging.info(f"Sentiment: {sentiment}")
 
     # Save analysis history (if user is logged in)
     if user:
@@ -22,8 +34,6 @@ async def analyze_sentiment(request: TextRequest, user: User = Depends(get_curre
             return result
 
     return {"text": text, "sentiment": sentiment}
- 
-
 
 
 
