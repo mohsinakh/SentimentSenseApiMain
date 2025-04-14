@@ -5,9 +5,8 @@ from fastapi import WebSocket, WebSocketDisconnect, APIRouter ,HTTPException,Bac
 from pathlib import Path
 import os,time
 import tensorflow as tf
-from fastapi.responses import JSONResponse,FileResponse,StreamingResponse
+from fastapi.responses import JSONResponse,FileResponse
 from pydantic import BaseModel
-from tempfile import NamedTemporaryFile
 
 
 TIMEOUT = 5

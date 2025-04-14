@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, sentiment, email_service, youtube, reddit
 from mangum import Mangum
