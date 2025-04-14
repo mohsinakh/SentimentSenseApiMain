@@ -1,7 +1,7 @@
-# Use official Python image
-FROM python:3.10-slim
+# Use official Python 3.11 slim image
+FROM python:3.11-slim
 
-# Install system dependencies for OpenCV
+# Install system dependencies for OpenCV and related packages
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
@@ -10,19 +10,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-
-COPY . /app
-
-
-# Copy requirements first to leverage Docker cache
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy all project files
 COPY . .
 
 # Expose port
 EXPOSE 8000
 
-# Start server
-CMD ["gunicorn", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
+# Start server using correct path to main.py inside API/
+CMD ["gunicorn", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "API.main:app"]
