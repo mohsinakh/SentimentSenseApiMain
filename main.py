@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, sentiment, email_service, youtube, reddit
-from mangum import Mangum
+# from mangum import Mangum
 import httpx,random,asyncio,logging
 from routes.emotion import router as emotion_router
 
