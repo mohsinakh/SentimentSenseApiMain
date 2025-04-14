@@ -1,12 +1,12 @@
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from transformers import pipeline
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import logging
 
-
 logger = logging.getLogger(__name__)
-
-
 analyzer = SentimentIntensityAnalyzer()
+
+# Initialize classifier as None globally
+classifier = None
 
 def get_sentiment(text: str) -> str:
     sentiment_score = analyzer.polarity_scores(text)
@@ -18,37 +18,30 @@ def get_sentiment(text: str) -> str:
         return "negative"
     else:
         return "neutral"
-    
 
-
-
-
-# Try to load the classifier with error handling
-try:
-    # Switching to a zero-shot-classification pipeline or manually specifying model configuration
-    classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
-    logger.info("Model loaded successfully")
-except Exception as e:
-    logger.info(f"Error loading model: {e}")
-    classifier = None  # Fallback or additional handling here
-
-
-
-
-# Function to classify emotions
 def get_emotions(text: str):
-    if classifier is not None:
-        text = text[:512]  # Limit input size
-        try:
-            result = classifier(text)  # No candidate_labels in text-classification
-            logging.info(f"Model Output: {result}")
+    global classifier
 
-            if isinstance(result, list) and len(result) > 0:
-                top_prediction = result[0]  # Take the first result
-                return {"label": top_prediction["label"], "score": top_prediction["score"]}
-            else:
-                return {"error": "No valid classification result"}
+    # Lazy-load on first use
+    if classifier is None:
+        try:
+            classifier = pipeline(
+                "text-classification",
+                model="j-hartmann/emotion-english-distilroberta-base"
+            )
+            logger.info("Model loaded successfully on demand.")
         except Exception as e:
-            return {"error": f"Error during classification: {e}"}
-    else:
-        return {"error": "Model not loaded successfully"}
+            logger.error(f"Failed to load model on demand: {e}")
+            return {"error": "Model could not be loaded."}
+
+    try:
+        text = text[:512]
+        result = classifier(text)
+        logger.info(f"Model Output: {result}")
+        if isinstance(result, list) and result:
+            top_prediction = result[0]
+            return {"label": top_prediction["label"], "score": top_prediction["score"]}
+        else:
+            return {"error": "No valid classification result"}
+    except Exception as e:
+        return {"error": f"Error during classification: {e}"}
