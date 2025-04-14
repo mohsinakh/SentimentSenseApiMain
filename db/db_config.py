@@ -24,7 +24,7 @@ _client = None
 
 # Establish connection to MongoDB
 try:
-    db = client["sentiment_analysis_local"]
+    db = client["sentiment_analysis"]
     users_collection = db["users"]
     google_users_collection = db["google_users"]
     analysis_history_collection = db["analysis_history"]  # New collection for analysis history
