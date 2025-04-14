@@ -54,4 +54,4 @@ def health_check():
     return {"status": "ok", "version": "1.0.0"}
 
 # Mangum handler (Must be last line)
-handler = Mangum(app)
+# handler = Mangum(app)
