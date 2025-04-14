@@ -6,15 +6,13 @@ from db.models import User
 from db.crud import save_analysis_history, convert_objectid_to_str
 from sentiment.analyzer import get_emotions
 from config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET
-import re, praw, asyncpraw, logging
+import re, asyncpraw, logging
 
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
-# Set up Reddit API client using PRAW
-# reddit = praw.Reddit(client_id=REDDIT_CLIENT_ID, client_secret=REDDIT_CLIENT_SECRET, user_agent="Sentiment Analysis")
-
+# Set up Reddit API client using AsyncPRAW
 reddit = asyncpraw.Reddit(
     client_id=REDDIT_CLIENT_ID,
     client_secret=REDDIT_CLIENT_SECRET,
@@ -33,23 +31,22 @@ async def fetch_reddit_comments(request: RedditRequest, user: Optional[User] = D
         
         # ✅ Fetch necessary attributes explicitly
         await post.load()  # 🔥 Ensures we get all submission details
-        post_author = post.author.name if post.author else "Anonymous"  # Fix here: No need to await
+        post_author = post.author.name if post.author else "Anonymous"
         post_content = post.selftext if hasattr(post, "selftext") else "No content available"
+        
+        # Fetch and await comments
         post_comments = await post.comments()
-
-        # logging.info(f"Fetched post: {post.title}, by {post_author} , {post}")  # ✅ Log actual post details
-        await post.comments.replace_more(limit=0)  # 🔥 Await this as well
+        await post.comments.replace_more(limit=0)  # 🔥 Ensure this is awaited to get the comments correctly
         post_comments = post.comments.list()  # Now this is a list of comment objects
-
-        # logging.info(post_comments)
 
         # Get all comments and analyze sentiment
         comments = []
         for comment in post_comments:
-
+            sentiment_result = await get_emotions(comment.body)  # Ensure this is awaited
+            sentiment_label = sentiment_result.get("label") if sentiment_result else "unknown"
             comment_data = {
                 "text": comment.body,
-                "sentiment": get_emotions(comment.body).get("label"),
+                "sentiment": sentiment_label,
                 "user": comment.author.name if comment.author else "Anonymous"
             }
             comments.append(comment_data)
@@ -69,8 +66,7 @@ async def fetch_reddit_comments(request: RedditRequest, user: Optional[User] = D
                 },
                 "comments": comments
             })
-            # logging.info(f"save_analysis_history result: {result}")  # ✅ Debugging step
-
+            
             # Check if result is a list or dict and handle accordingly
             if isinstance(result, list):
                 logging.error(f"Result is a list: {result}")
