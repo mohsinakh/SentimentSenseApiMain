@@ -118,7 +118,7 @@ async def login(request: UserLogin):
 async def check_user(user: UserCheckRequest):
     try:
         if user.token:
-            # Your Google token validation logic here
+            # Google token validation logic here
             response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 params={"access_token": user.token},
@@ -132,8 +132,8 @@ async def check_user(user: UserCheckRequest):
 
             if not user_info.get("verified_email"):
                 raise HTTPException(status_code=400, detail="Email is not verified")
-            
             existing_user = users_collection.find_one({"$or": [{"email": user_info.get("email")}, {"username": user.username}]})
+            
             if existing_user:
                 if existing_user.get("email") == user_info.get("email"):
                     return {"error": "Email already registered ,Please Log in ..."}

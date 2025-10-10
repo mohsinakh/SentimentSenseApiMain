@@ -11,16 +11,16 @@ app = FastAPI()
 
 logger = logging.getLogger(__name__)
 
-# CORS Configuration (Good)
+# CORS Configuration 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sentiment-sense.netlify.app", "http://localhost:3000"],
+    allow_origins=["https://sentiment-sense.netlify.app", "http://localhost:3000","https://sentiment.mohsinabbas.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include Routers (Correct)
+# Include Routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(sentiment.router, prefix="/sentiment", tags=["sentiment"])
 app.include_router(email_service.router, prefix="/email", tags=["email"])

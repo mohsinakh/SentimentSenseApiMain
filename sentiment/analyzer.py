@@ -1,11 +1,21 @@
-import httpx
-import os
+# import httpx
+# import os
 import logging
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import os
+from huggingface_hub import InferenceClient
+
+HF_TOKEN = os.environ.get("HF_TOKEN")  # store token as env variable
+if not HF_TOKEN:
+    logger.error("❌ HF_TOKEN environment variable not set")
+client = InferenceClient(provider="hf-inference", api_key=HF_TOKEN)
+
+HF_MODEL = "j-hartmann/emotion-english-distilroberta-base"
 
 
 logger = logging.getLogger(__name__)
 analyzer = SentimentIntensityAnalyzer()
+
 
 
 def get_sentiment(text: str) -> str:
@@ -20,31 +30,21 @@ def get_sentiment(text: str) -> str:
         return "neutral"
 
 
+# Load the model pipeline once (globally for efficiency)
+# emotion_classifier = None
 
-HUGGINGFACE_API_TOKEN = os.environ.get("HUGGINGFACE_API_TOKEN")  # keep token in .env
-HUGGINGFACE_API_URL = os.environ.get("HUGGINGFACE_API_URL")  # keep token in .env
+
 
 
 async def get_emotions(text: str):
-    api_url = HUGGINGFACE_API_URL
-    headers = {"Authorization": f"Bearer {HUGGINGFACE_API_TOKEN}"}
-    
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(api_url, headers=headers, json={"inputs": text[:512]})
-            response.raise_for_status()
-            results = response.json()
-
-            # Debugging: print the structure of results
-            logger.info(f"Response from Hugging Face API: {results}")
-
-            # Check if the response contains a list and access the first list in it
-            if isinstance(results, list) and results:
-                emotions_list = results[0]  # This accesses the first list of emotions
-                top_prediction = max(emotions_list, key=lambda x: x["score"])
-                return {"label": top_prediction["label"], "score": top_prediction["score"]}
-            else:
-                return {"error": "No valid classification result"}
-
-        except httpx.RequestError as e:
-            return {"error": f"Hugging Face API request failed: {e}"}
+    try:
+        # HF Inference call (first 512 chars for safety)
+        result = client.text_classification(text[:512], model=HF_MODEL)
+        # result is a list of dicts: [{"label": "joy", "score": 0.95}, ...]
+        if result:
+            top_prediction = max(result, key=lambda x: x["score"])
+            return {"label": top_prediction["label"], "score": top_prediction["score"]}
+        else:
+            return {"error": "No valid classification result"}
+    except Exception as e:
+        return {"error": f"Hugging Face inference failed: {e}"}

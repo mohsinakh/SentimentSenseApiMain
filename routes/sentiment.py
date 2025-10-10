@@ -7,6 +7,7 @@ from db.models import User
 from db.db_config import analysis_history_collection
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
