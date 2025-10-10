@@ -10,6 +10,7 @@ uvicorn
 passlib[bcrypt]
 python-jose
 pymongo
+tf-keras
 email-validator
 httpx
 pillow
@@ -19,4 +20,6 @@ asyncpraw
 numpy
 websockets
 gunicorn
+tensorflow
 huggingface_hub
+
