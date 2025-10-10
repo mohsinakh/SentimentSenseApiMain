@@ -13,14 +13,10 @@ pymongo
 email-validator
 httpx
 pillow
-tensorflow
-tf-keras
 opencv-python-headless
 fastapi-limiter
 asyncpraw
 numpy
 websockets
 gunicorn
-transformers
-torch
-scikit-learn
+huggingface_hub
