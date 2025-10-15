@@ -4,6 +4,7 @@ from fastapi import HTTPException
 import resend
 from db.db_config import email_limit_collection
 from db.models import EmailLimit
+from config import EMAIL_USER
 
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
@@ -46,7 +47,7 @@ def send_email(to_email: str, subject: str, body: str, is_html: bool = True):
         reset_email_count_if_needed(get_email_limit(to_email))
         
         response = resend.Emails.send({
-            "from": "contact@mohsinabbas.site",
+            "from": EMAIL_USER,
             "to": to_email,
             "subject": subject,
             "html": body if is_html else None,

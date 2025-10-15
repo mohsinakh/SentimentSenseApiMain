@@ -9,10 +9,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 400
 
 # Email
-SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
+
 EMAIL_USER = os.environ.get("EMAIL_USER", "your_email@gmail.com")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "your_email_password")
+
 
 # Email limit threshold (e.g., max emails per day)
 MAX_EMAILS_PER_DAY = 10
