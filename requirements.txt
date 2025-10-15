@@ -22,4 +22,4 @@ websockets
 gunicorn
 tensorflow
 huggingface_hub
-
+resend
